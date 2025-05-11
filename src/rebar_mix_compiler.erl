@@ -12,27 +12,24 @@ build(AppInfo) ->
   BuildDir = filename:join(AppDir, "../"),
   BuildElixirDir = filename:join(AppDir, "_build/prod/lib/"),
   io:format("[lugao] BuildElixirDir ~p~n", [BuildElixirDir]),
-  io:format("[lugao] list_dir ~p~n", [rebar_utils:list_dir(BuildElixirDir)]),
 
   AppName = rebar_mix_utils:to_string(rebar_app_info:name(AppInfo)),
 
   rebar_mix_utils:compile(AppDir),
+  io:format("[lugao] list_dir ~p~n", [rebar_utils:list_dir(BuildElixirDir)]),
 
-  case rebar_utils:list_dir(BuildElixirDir) of
-    {ok, Apps} ->
-      Deps = Apps -- [AppName],
-      rebar_mix_utils:move_to_path(Deps, BuildElixirDir, BuildDir),
-      AppBuild = filename:join(AppDir, "_build/prod/lib/" ++ AppName ++ "/ebin"),
-      AppTaget = filename:join(AppDir, "ebin"),
-      ec_file:copy(AppBuild, AppTaget, [recursive]),
-    
-      Lock = rebar_mix_utils:create_rebar_lock_from_mix(AppDir, Deps),
-      ElixirLock = rebar_mix_utils:elixir_to_lock(Lock),
-      rebar_mix_utils:save_rebar_lock(AppDir, ElixirLock),
-      rebar_mix_utils:delete(filename:join(AppDir, "_build"));
-    _ ->
-      skip
-  end,
+  {ok, Apps} = rebar_utils:list_dir(BuildElixirDir),
+  Deps = Apps -- [AppName],
+  rebar_mix_utils:move_to_path(Deps, BuildElixirDir, BuildDir),
+  AppBuild = filename:join(AppDir, "_build/prod/lib/" ++ AppName ++ "/ebin"),
+  AppTaget = filename:join(AppDir, "ebin"),
+  ec_file:copy(AppBuild, AppTaget, [recursive]),
+  
+  Lock = rebar_mix_utils:create_rebar_lock_from_mix(AppDir, Deps),
+  ElixirLock = rebar_mix_utils:elixir_to_lock(Lock),
+  rebar_mix_utils:save_rebar_lock(AppDir, ElixirLock),
+  rebar_mix_utils:delete(filename:join(AppDir, "_build")),
+
   ok.
 
 format_error({mix_not_found, Name}) ->
